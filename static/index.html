@@ -8,13 +8,16 @@
       Author: Feross Aboukhadijeh <http://feross.org>
       GitHub: https://github.com/feross/magickeyboard.io
       Inspired by: https://www.reddit.com/r/gifs/comments/3t5ssx/magic_keyboard/
+
+      Modified for AudioHackDay Singapore to include Midi Input support
+      by Joshua Koo
     -->
 
     <title>Magic Keyboard</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="search" href="/opensearch.xml" title="Instant.io" type="application/opensearchdescription+xml">
-    <link rel="stylesheet" href="/main.css" charset="utf-8">
+    <link rel="stylesheet" href="./main.css" charset="utf-8">
     <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
     <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
@@ -30,17 +33,68 @@
   </head>
 
   <body>
-    <div class="help">Type something<span class="blink"></span></div>
+    <div class="help">Turn something<span class="blink"></span></div>
     <div class="content"></div>
-    <script src="/bundle.js"></script>
+    <script src="./midimessage.js"></script>
+    <script src="./bundle.js"></script>
     <script>
-      window.ga = window.ga || function () {
-        (ga.q = ga.q || []).push(arguments)
+    if (navigator.requestMIDIAccess){
+      navigator.requestMIDIAccess().then( onMIDIInit, onMIDIReject );
+    }
+    else{
+      console.error("DOH! No MIDI support present in your browser.");
+    }
+
+    function onMIDIInit(midi) {
+      m = midi;
+      // console.log('onMIDIInit', arguments);
+      console.log("Successfully Initialized MIDI");
+      var foundString = "Found " + midi.inputs.size + " inputs and " + midi.outputs.size + " outputs.";
+      console.log(foundString);
+      console.log("Sysex is", midi.sysexEnabled ? "enabled" : "disabled");
+
+      console.log(midi);
+
+      var inputs = midi.inputs.values();
+      // loop over all available inputs and listen for any MIDI input
+      for (var input = inputs.next(); input && !input.done; input = inputs.next()) {
+          // each time there is a midi message call the onMIDIMessage function
+          input.value.onmidimessage = onMIDIMessage;
       }
-      ga.l = +new Date
-      ga('create', 'UA-3898076-20', 'auto')
-      ga('send', 'pageview')
+
+      // connection: "open"
+      // id: "-526320934"
+      // manufacturer: "KORG INC."
+      // name: "na
+    }
+
+    var chars = [1,2,3,4,5,6,7, 8, 9, 0, '-', '=', '`', ',', '.', '/', '[', ']']
+
+    // for (var i = 0x1F601; i <= 0x1F64F; i++) {
+    //   chars.push(String.fromCodePoint(i))
+    // }
+
+
+    function onMIDIMessage(event) {
+      // data = message.data; // this gives us our [command/channel, note, velocity] data.
+      // console.log('MIDI data', data); // MIDI data [144, 63, 73]
+
+      var m = midimessage(event);
+      // console.log(m.messageType, m.controllerNumber, m.controllerValue); // m,
+
+      addLetter(chars[chars.length * Math.random() | 0], m.controllerNumber / 100  * innerWidth, innerHeight)
+
+    }
+
+    function onMIDIReject (error){
+      console.error(error);
+    }
+
+    // Matter.Events.on(engine, "afterRender",  function() {
+    //   console.log('.')
+    // })
+
+
     </script>
-    <script async src="//www.google-analytics.com/analytics.js"></script>
   </body>
 </html>

@@ -42,7 +42,8 @@ var engine = Matter.Engine.create(document.querySelector('.content'), {
     options: {
       width: WIDTH,
       height: HEIGHT,
-      background: '#222'
+      background: '#222',
+      renderer: 'webgl'
     }
   }
 })
@@ -105,6 +106,7 @@ document.body.addEventListener('keydown', function (e) {
   }
 }, false)
 
+
 function addLetter (key, x, y) {
   playTypeSound()
   hideHelp()
@@ -126,6 +128,10 @@ function addLetter (key, x, y) {
 
   Matter.Body.applyForce(body, body.position, vector)
   Matter.World.add(engine.world, [ body ])
+
+  setTimeout(function() {
+    Matter.World.remove(engine.world, body);
+  }, 1000 + Math.random() * 5000);
 }
 
 function getImagePath (key) {
@@ -137,7 +143,7 @@ function getImagePath (key) {
 
 function playTypeSound () {
   var $audio = document.createElement('audio')
-  $audio.src = '/type.mp3'
+  $audio.src = './type.mp3'
   $audio.addEventListener('ended', function (e) {
     $audio.src = ''
   })
@@ -175,3 +181,8 @@ document.body.addEventListener('touchend', function (e) {
   console.log('')
   touchActive = false
 })
+
+
+window.addLetter = addLetter
+window.engine = engine
+window.Matter = Matter
